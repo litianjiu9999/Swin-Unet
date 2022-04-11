@@ -4,6 +4,8 @@ from medpy import metric
 from scipy.ndimage import zoom
 import torch.nn as nn
 import SimpleITK as sitk
+from PIL import Image
+import copy
 
 
 class DiceLoss(nn.Module):
@@ -58,45 +60,61 @@ def calculate_metric_percase(pred, gt):
         return 0, 0
 
 
-def test_single_volume(image, label, net, classes, patch_size=[256, 256], test_save_path=None, case=None, z_spacing=1):
+def test_single_volume(image, label, net, classes, patch_size=[224, 224], test_save_path=None, case=None, z_spacing=1):
     image, label = image.squeeze(0).cpu().detach().numpy(), label.squeeze(0).cpu().detach().numpy()
-    if len(image.shape) == 3:
-        prediction = np.zeros_like(label)
-        for ind in range(image.shape[0]):
-            slice = image[ind, :, :]
-            x, y = slice.shape[0], slice.shape[1]
-            if x != patch_size[0] or y != patch_size[1]:
-                slice = zoom(slice, (patch_size[0] / x, patch_size[1] / y), order=3)  # previous using 0
-            input = torch.from_numpy(slice).unsqueeze(0).unsqueeze(0).float().cuda()
-            net.eval()
-            with torch.no_grad():
-                outputs = net(input)
-                out = torch.argmax(torch.softmax(outputs, dim=1), dim=1).squeeze(0)
-                out = out.cpu().detach().numpy()
-                if x != patch_size[0] or y != patch_size[1]:
-                    pred = zoom(out, (x / patch_size[0], y / patch_size[1]), order=0)
-                else:
-                    pred = out
-                prediction[ind] = pred
-    else:
-        input = torch.from_numpy(image).unsqueeze(
-            0).unsqueeze(0).float().cuda()
-        net.eval()
-        with torch.no_grad():
-            out = torch.argmax(torch.softmax(net(input), dim=1), dim=1).squeeze(0)
-            prediction = out.cpu().detach().numpy()
+    _,x, y = image.shape
+    if x != patch_size[0] or y != patch_size[1]:
+        #缩放图像符合网络输入
+        image = zoom(image, (1,patch_size[0] / x, patch_size[1] / y), order=3)
+    input = torch.from_numpy(image).unsqueeze(0).float().cuda()
+    print("input_size:",input.shape)
+    net.eval()
+    with torch.no_grad():
+        out = torch.argmax(torch.softmax(net(input), dim=1), dim=1).squeeze(0)
+        out = out.cpu().detach().numpy()
+
+##############################################################################
+        img = Image.fromarray(out, 'RGB')
+        img.save('my.png')
+        img.show()
+##############################################################################
+
+        print(out.shape)
+        if x != patch_size[0] or y != patch_size[1]:
+            #缩放图像至原始大小
+            prediction = zoom(out, (x / patch_size[0], y / patch_size[1]), order=0)
+        else:
+            prediction = out
+
     metric_list = []
     for i in range(1, classes):
         metric_list.append(calculate_metric_percase(prediction == i, label == i))
 
     if test_save_path is not None:
-        img_itk = sitk.GetImageFromArray(image.astype(np.float32))
-        prd_itk = sitk.GetImageFromArray(prediction.astype(np.float32))
-        lab_itk = sitk.GetImageFromArray(label.astype(np.float32))
-        img_itk.SetSpacing((1, 1, z_spacing))
-        prd_itk.SetSpacing((1, 1, z_spacing))
-        lab_itk.SetSpacing((1, 1, z_spacing))
-        sitk.WriteImage(prd_itk, test_save_path + '/'+case + "_pred.nii.gz")
-        sitk.WriteImage(img_itk, test_save_path + '/'+ case + "_img.nii.gz")
-        sitk.WriteImage(lab_itk, test_save_path + '/'+ case + "_gt.nii.gz")
+        a1 = copy.deepcopy(prediction)
+        a2 = copy.deepcopy(prediction)
+        a3 = copy.deepcopy(prediction)
+
+        a1[a1 == 1] = 255
+        a1[a1 == 2] = 0
+        a1[a1 == 3] = 255
+        a1[a1 == 4] = 20
+
+        a2[a2 == 1] = 255
+        a2[a2 == 2] = 255
+        a2[a2 == 3] = 0
+        a2[a2 == 4] = 10
+
+        a3[a3 == 1] = 255
+        a3[a3 == 2] = 77
+        a3[a3 == 3] = 0
+        a3[a3 == 4] = 120
+
+        a1 = Image.fromarray(np.uint8(a1)).convert('L')
+        a2 = Image.fromarray(np.uint8(a2)).convert('L')
+        a3 = Image.fromarray(np.uint8(a3)).convert('L')
+        prediction = Image.merge('RGB', [a1, a2, a3])
+        prediction.save(test_save_path+'/'+case+'.png')
+
+
     return metric_list

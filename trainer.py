@@ -15,6 +15,8 @@ from tqdm import tqdm
 from utils import DiceLoss
 from torchvision import transforms
 from utils import test_single_volume
+from PIL import Image
+
 
 def trainer_synapse(args, model, snapshot_path):
     from datasets.dataset_synapse import Synapse_dataset, RandomGenerator
@@ -34,7 +36,7 @@ def trainer_synapse(args, model, snapshot_path):
     def worker_init_fn(worker_id):
         random.seed(args.seed + worker_id)
 
-    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True,
+    trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True,
                              worker_init_fn=worker_init_fn)
     if args.n_gpu > 1:
         model = nn.DataParallel(model)
@@ -54,6 +56,16 @@ def trainer_synapse(args, model, snapshot_path):
             image_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             image_batch, label_batch = image_batch.cuda(), label_batch.cuda()
             outputs = model(image_batch)
+##############################################################################
+            # out = torch.argmax(torch.softmax(model(image_batch), dim=1), dim=1).squeeze(0)
+            # out = out.cpu().detach().numpy()
+            # img = Image.fromarray(out, 'RGB')
+            # img.save('my.png')
+            # img.show()
+
+            out = torch.argmax(torch.softmax(outputs, dim=1), dim=1).squeeze(0)
+            print(out.cpu().detach().numpy())
+##############################################################################
             loss_ce = ce_loss(outputs, label_batch[:].long())
             loss_dice = dice_loss(outputs, label_batch, softmax=True)
             loss = 0.4 * loss_ce + 0.6 * loss_dice
