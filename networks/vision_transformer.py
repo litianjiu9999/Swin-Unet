@@ -72,6 +72,7 @@ class SwinUnet(nn.Module):
             model_dict = self.swin_unet.state_dict()
             full_dict = copy.deepcopy(pretrained_dict)
             for k, v in pretrained_dict.items():
+                print("k:", k)
                 if "layers." in k:
                     current_layer_num = 3-int(k[7:8])
                     current_k = "layers_up." + str(current_layer_num) + k[8:]

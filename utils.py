@@ -74,9 +74,9 @@ def test_single_volume(image, label, net, classes, patch_size=[224, 224], test_s
         out = out.cpu().detach().numpy()
 
 ##############################################################################
-        img = Image.fromarray(out, 'RGB')
-        img.save('my.png')
-        img.show()
+        #img = Image.fromarray(out, 'RGB')
+        #img.save('my.png')
+        #img.show()
 ##############################################################################
 
         print(out.shape)

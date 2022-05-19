@@ -53,7 +53,7 @@ class Synapse_dataset(Dataset):
         self.split = split
         self.sample_list = open(os.path.join(list_dir, self.split+'.txt')).readlines()
         self.data_dir = base_dir
-
+    
     def __len__(self):
         return len(self.sample_list)
 

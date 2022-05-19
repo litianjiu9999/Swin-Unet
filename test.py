@@ -24,7 +24,7 @@ parser.add_argument('--num_classes', type=int,
                     default=2, help='output channel of network')
 parser.add_argument('--list_dir', type=str,
                     default='./lists/lists_Synapse', help='list dir')
-parser.add_argument('--output_dir', default="outputs",type=str, help='output dir')   
+parser.add_argument('--output_dir', default="../outputs/swinunet",type=str, help='output dir')   
 parser.add_argument('--max_iterations', type=int,default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int, default=150, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4,
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # snapshot = os.path.join(args.output_dir, 'epoch_149.pth')
     # if not os.path.exists(snapshot): snapshot = snapshot.replace('best_model', 'epoch_'+str(args.max_epochs-1))
     # msg = net.load_state_dict(torch.load(snapshot))
-    snapshot = r'outputs/epoch_149.pth'
+    snapshot = r'../outputs/swinunet/epoch_149.pth'
 
     # snapshot = r'pretrained_ckpt/swin_tiny_patch4_window7_224.pth'
 

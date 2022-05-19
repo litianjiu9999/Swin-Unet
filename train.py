@@ -18,13 +18,13 @@ parser.add_argument('--list_dir', type=str,
                     default='./lists/lists_Synapse', help='list dir')
 parser.add_argument('--num_classes', type=int,
                     default=2, help='output channel of network')
-parser.add_argument('--output_dir', type=str,default="outputs", help='output dir')                   
+parser.add_argument('--output_dir', type=str,default="../outputs/swinunet", help='output dir')                   
 parser.add_argument('--max_iterations', type=int,
                     default=30000, help='maximum epoch number to train')
 parser.add_argument('--max_epochs', type=int,
                     default=150, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int,
-                    default=4, help='batch_size per gpu')
+                    default=1, help='batch_size per gpu')
 parser.add_argument('--n_gpu', type=int, default=1, help='total gpu')
 parser.add_argument('--deterministic', type=int,  default=1,
                     help='whether use deterministic training')
@@ -93,7 +93,29 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     net = ViT_seg(config, img_size=args.img_size, num_classes=args.num_classes).cuda()
+    params = list(net.parameters())
+    k = 0
+    for i in params:
+        l = 1
+        print("该层的结构：" + str(list(i.size())))
+        for j in i.size():
+            l *= j
+        print("该层参数和：" + str(l))
+        k = k + l
+    print("总参数数量和：" + str(k))
+
     net.load_from(config)
+
+    params = list(net.parameters())
+    k = 0
+    for i in params:
+        l = 1
+        print("该层的结构：" + str(list(i.size())))
+        for j in i.size():
+            l *= j
+        print("该层参数和：" + str(l))
+        k = k + l
+    print("总参数数量和：" + str(k))
 
     trainer = {'Synapse': trainer_synapse,}
     trainer[dataset_name](args, net, args.output_dir)

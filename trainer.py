@@ -63,9 +63,22 @@ def trainer_synapse(args, model, snapshot_path):
             # img.save('my.png')
             # img.show()
 
-            out = torch.argmax(torch.softmax(outputs, dim=1), dim=1).squeeze(0)
-            print(out.cpu().detach().numpy())
+            # out = torch.argmax(torch.softmax(outputs, dim=1), dim=1).squeeze(0)
+            # print(out.cpu().detach().numpy())
 ##############################################################################
+            # print(outputs.shape)
+            # print(label_batch.shape)
+            # from torchvision.transforms import ToPILImage
+            # show = ToPILImage() # 可以把Tensor转成Image，方便可视化
+            # # temp1 = label_batch.squeeze(0).to(torch.float32)
+            # # print(temp1.shape)
+            # # show(temp1).show()
+            # temp1 = outputs.squeeze(0).to(torch.float32)
+            # temp2 = temp1
+            # print(temp2.shape)
+            # show(temp2).show()
+
+
             loss_ce = ce_loss(outputs, label_batch[:].long())
             loss_dice = dice_loss(outputs, label_batch, softmax=True)
             loss = 0.4 * loss_ce + 0.6 * loss_dice
